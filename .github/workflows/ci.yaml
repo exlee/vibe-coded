@@ -61,6 +61,10 @@ jobs:
       - name: Compile
         run: |
           cargo zigbuild --target ${{ matrix.target }} --release
+        env:
+          AR: zig ar
+          CC: zig cc -target ${{ matrix.target }}
+          CXX: zig c++ -target ${{ matrix.target }}
       - name: Rename Binaries
         shell: bash
         run: |
@@ -68,18 +72,15 @@ jobs:
 
 
           if [ -f "vibe-coded.exe" ]; then
-            mv vibe-coded.exe  ${{ matrix.target }}-vibe-coded.exe
             mv vibe-coded.exe ${{ matrix.target }}-vibe-coded.exe
           else
             mv vibe-coded  ${{ matrix.target }}-vibe-coded
-            mv vibe-coded ${{ matrix.target }}-vibe-coded
           fi
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binaries-${{ matrix.target }}
           path: |
-            target/${{ matrix.target }}/release/${{ matrix.target }}-vibe-coded*
             target/${{ matrix.target }}/release/${{ matrix.target }}-vibe-coded*
             !**/*.d
             !**/*.rlib
