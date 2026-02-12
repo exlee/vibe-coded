@@ -26,7 +26,7 @@ It takes just one argument - the path to the repository you want to
 check:
 
 ``` bash
-vibe-coded https://github.com/username/repo
+vibe-coded https://github.com/exlee/vibe-coded
 ```
 
 # The Vibe (Philosophy & Rules) 

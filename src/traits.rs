@@ -21,7 +21,6 @@ pub trait Rule: Send + Sync {
         self.run(&repo)
     }
    fn run(&self, repo: &Repo) -> Box<dyn RuleResult> {
-
         match self.run_impl(repo) {
             Ok(r) => r,
             Err(e) => Box::new(FailedResult::from(e.0)),
