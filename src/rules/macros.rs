@@ -13,6 +13,9 @@ macro_rules! rule_run_impl {
                     }
                 }
             }
+            inventory::submit! {
+                crate::traits::RuleReg(&$rule)
+            }
     }
 }
 pub(crate) use rule_run_impl;
@@ -45,6 +48,9 @@ macro_rules! threshold_rule {
                         None => Err(RuleID($rule_id)),
                     }
                 }
+            }
+            inventory::submit! {
+                crate::traits::RuleReg(&Rule)
             }
             use crate::{
                 traits::{Vibe}

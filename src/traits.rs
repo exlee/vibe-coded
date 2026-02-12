@@ -12,6 +12,9 @@ pub enum Vibe {
     Undecided,
 }
 
+pub struct RuleReg(pub &'static dyn Rule);
+inventory::collect!(RuleReg);
+
 pub struct RuleID(pub &'static str);
 
 pub trait Rule: Send + Sync {

@@ -89,3 +89,13 @@ pub fn count_llm_words_repo(repo: &Repo) -> Option<usize> {
     let readme = crate::readme::get_readme(repo)?;
     Some(crate::readme::count_llm_words(&readme))
 }
+
+pub fn length_in_words(repo: &Repo) -> Option<usize> {
+    let readme = crate::readme::get_readme(repo)?;
+    let mut counter = 0;
+    for _ in readme.unicode_words() {
+        counter += 1
+    }
+    Some(counter)
+}
+

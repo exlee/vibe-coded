@@ -7,6 +7,9 @@ impl Rule for RepositoryAge {
         Ok(Box::new(RepositoryAgeResult { age_in_s: secs_since_first_commit(repo) }))
     }
 }
+inventory::submit! {
+    crate::traits::RuleReg(&RepositoryAge)
+}
 
 pub struct RepositoryAgeResult {
     age_in_s: u64

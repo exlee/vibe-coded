@@ -19,6 +19,11 @@ impl Rule for EmojiCount {
         }
     }
 }
+
+inventory::submit! {
+    crate::traits::RuleReg(&EmojiCount)
+}
+
 pub struct EmojiCountResult {
     count: usize,
 }
@@ -60,6 +65,16 @@ threshold_rule!(
     output_format: "README.md headings count: {}",
     vibe_compare: gt,
     vibe_threshold: 20_usize
+    );
+
+threshold_rule!(
+    id: "readme-length",
+    module: readme_length,
+    value_function: crate::readme::length_in_words,
+    value_type: usize,
+    output_format: "README.md word count: {}",
+    vibe_compare: gt,
+    vibe_threshold: 1000_usize
     );
 
 threshold_rule!(

@@ -1,5 +1,6 @@
-use std::{collections::HashSet};
+use std::{collections::{HashMap, HashSet}, path::PathBuf};
 use cached::proc_macro::once;
+use git2::TreeWalkMode;
 
 use crate::traits::Repo;
 
@@ -108,4 +109,85 @@ fn mean_iqr(data: &mut [usize]) -> Option<f64> {
     }
 
     Some(filtered.iter().map(|&&x| x).sum::<usize>() as f64 / filtered.len() as f64)
+}
+
+const COMMENT_MAP: [(&str, &str); 47] = [
+    ("ada", "--"),
+    ("bash", "#"),
+    ("c", "//"),
+    ("clj", ";"),
+    ("cpp", "//"),
+    ("cs", "//"),
+    ("dart", "//"),
+    ("dockerfile", "#"),
+    ("el", "#"),
+    ("elm", "--"),
+    ("erl", "%"),
+    ("f90", "!"),
+    ("go", "//"),
+    ("h", "//"),
+    ("hpp", "//"),
+    ("hs", "--"),
+    ("ini", ";"),
+    ("java", "//"),
+    ("jl", "#"),
+    ("js", "//"),
+    ("jsx", "//"),
+    ("kak", "#"),
+    ("kt", "//"),
+    ("lisp", ";"),
+    ("lua", "--"),
+    ("m", "%"),
+    ("makefile", "#"),
+    ("php", "//"),
+    ("pl", "#"),
+    ("py", "#"),
+    ("r", "#"),
+    ("rb", "#"),
+    ("rs", "//"),
+    ("scala", "//"),
+    ("scm", ";"),
+    ("sh", "#"),
+    ("sql", "--"),
+    ("swift", "//"),
+    ("tex", "%"),
+    ("toml", "#"),
+    ("ts", "//"),
+    ("tsx", "//"),
+    ("vhdl", "--"),
+    ("vim", "\""),
+    ("yaml", "#"),
+    ("yml", "#"),
+    ("zsh", "#"),
+];
+
+pub fn count_comment_ratio(repo: &Repo) -> Option<(usize, usize)> {
+    let ext_map: HashMap<&str, &str> = HashMap::from(COMMENT_MAP);
+    let mut line_count = 0;
+    let mut comment_count = 0;
+    repo.head()
+        .ok()?
+        .peel_to_tree()
+        .ok()?
+        .walk(TreeWalkMode::PreOrder, |_, te| {
+            let _: Option<()> = (|| {
+                let path = PathBuf::from(te.name().unwrap());
+                if let Some(ext) = path.extension().and_then(|s| s.to_str())
+                    && let Some(comment) = ext_map.get(ext)
+                {
+                    let blob = te.to_object(repo).ok()?.peel_to_blob().ok()?;
+                    let content = String::from_utf8(blob.content().to_vec()).ok()?;
+                    for line in content.lines() {
+                        line_count += 1;
+                        if line.contains(comment) {
+                            comment_count += 1;
+                        }
+                    }
+                }
+                Some(())
+            })();
+            0
+        })
+        .ok()?;
+    Some((comment_count, line_count))
 }

@@ -12,8 +12,8 @@ pub mod llm_files {
     pub struct RuleResult {
         pub files: Vec<String>,
         pub llm_files: Option<Vec<String>>,
-
     }
+
     impl RuleResult {
         fn check_files(self) -> Self {
             let mut llm_files = Vec::new();
@@ -56,3 +56,50 @@ pub mod llm_files {
         }
     }
 }
+
+pub mod comment_lines {
+    use crate::rules::macros::rule_run_impl;
+    const RULE_ID: &str = "code-comment-ratio";
+
+    rule_run_impl!(Rule, RULE_ID, crate::code::count_comment_ratio, RuleResult::from );
+    struct Rule;
+    struct RuleResult {
+        comments: usize,
+        lines: usize,
+        ratio: f64,
+    }
+    impl From<(usize, usize)> for RuleResult {
+        fn from(value: (usize, usize)) -> Self {
+            Self {
+                comments: value.0,
+                lines: value.1,
+                ratio: value.0 as f64 /value.1 as f64,
+            }
+        }
+    }
+    impl crate::traits::RuleResult for RuleResult {
+        fn name(&self) -> &'static str {
+            RULE_ID
+        }
+
+        fn is_vibe(&self) -> crate::traits::Vibe {
+            if self.ratio > 0.05 {
+                crate::traits::Vibe::Yes
+            } else {
+                crate::traits::Vibe::No
+            }
+        }
+        fn vibe_msg(&self) -> String {
+            "ratio > 0.05".into()
+        }
+
+        fn msg(&self) -> Option<String> {
+            let lines = self.lines;
+            let comments = self.comments;
+            let ratio = self.ratio;
+            Some(format!("Lines: {lines}, Comment Lines: {comments}, Ratio: {ratio:.2}"))
+        }
+    }
+
+}
+

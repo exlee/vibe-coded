@@ -23,6 +23,10 @@ impl Rule for RepositoryDevTime {
     }
 }
 
+inventory::submit! {
+    crate::traits::RuleReg(&RepositoryDevTime)
+}
+
 pub struct RepositoryDevTimeResult {
     age: Age,
 }
