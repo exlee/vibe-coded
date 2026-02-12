@@ -2,7 +2,7 @@ pub mod llm_files {
     use crate::rules::macros::rule_run_impl;
     const RULE_ID: &str = "repository-llm-files";
     pub const LLM_KEYWORDS: &[&str] = &[
-        "aider", "chatgpt", "claude", "clinerules", "continue", "copilot", "cursor",
+        "agents", "aider", "chatgpt", "claude", "clinerules", "continue", "copilot", "cursor",
         "cursorrules", "fabric", "gpt", "llm", "openai", "prompt", "system_prompt",
         "windsurfrules",
     ];
@@ -81,21 +81,21 @@ pub mod comment_lines {
         }
 
         fn is_vibe(&self) -> crate::traits::Vibe {
-            if self.ratio > 0.05 {
+            if self.ratio > 0.075 {
                 crate::traits::Vibe::Yes
             } else {
                 crate::traits::Vibe::No
             }
         }
         fn vibe_msg(&self) -> String {
-            "ratio > 0.05".into()
+            "ratio > 7.5%".into()
         }
 
         fn msg(&self) -> Option<String> {
             let lines = self.lines;
             let comments = self.comments;
-            let ratio = self.ratio;
-            Some(format!("Lines: {lines}, Comment Lines: {comments}, Ratio: {ratio:.2}"))
+            let ratio = self.ratio * 100.0;
+            Some(format!("Lines: {lines}, Comment Lines: {comments}, Ratio: {ratio:.1}%"))
         }
     }
 

@@ -1,4 +1,4 @@
-use std::path::{PathBuf};
+use std::{collections::{HashMap, HashSet}, path::PathBuf};
 use unicode_segmentation::UnicodeSegmentation;
 use pulldown_cmark::{Parser, Event, Tag};
 
@@ -70,24 +70,19 @@ const LLM_INDICATORS: [&str;25] = [
     "symphony",
 ];
 
-pub fn count_llm_words(markdown: &str) -> usize {
-    let mut count = 0;
+pub fn get_llm_words(markdown: &str) -> HashMap<String,usize> {
+    let mut results: HashMap<String,usize> = HashMap::new();
     for indicator in LLM_INDICATORS {
-        let mut saw = false;
         for _ in markdown.matches(indicator) {
-            count += 1;
-            if !saw {
-                saw = true;
-                //println!("{}", indicator);
-            }
-
+            let entry = results.entry(indicator.into()).or_default();
+            *entry += 1;
         }
     }
-    count
+    results
 }
-pub fn count_llm_words_repo(repo: &Repo) -> Option<usize> {
+pub fn count_llm_words_repo(repo: &Repo) -> Option<HashMap<String, usize>> {
     let readme = crate::readme::get_readme(repo)?;
-    Some(crate::readme::count_llm_words(&readme))
+    Some(crate::readme::get_llm_words(&readme))
 }
 
 pub fn length_in_words(repo: &Repo) -> Option<usize> {

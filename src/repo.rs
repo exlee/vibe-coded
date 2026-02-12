@@ -23,6 +23,7 @@ pub fn clone_repository(url: &str) -> Result<Repository, anyhow::Error> {
     };
     let mut destination = StagingDir::try_new(dest_path)?;
 
+	 	println!("Fetching repository, it might take a while");
     let repo = git2::Repository::clone(url, &destination)?;
     destination.persist();
     REPO_MSG.call_once(|| {
