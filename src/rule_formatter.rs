@@ -7,6 +7,7 @@ pub enum ResultType {
     Fail,
     Hand,
     Vibe,
+    #[allow(unused)]
     Percentage(usize),
 }
 

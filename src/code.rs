@@ -1,13 +1,7 @@
-use std::{collections::HashSet, fmt::Debug};
+use std::{collections::HashSet};
 use cached::proc_macro::once;
 
 use crate::traits::Repo;
-
-pub struct IQRs {
-    insertions: f64,
-    deletions: f64,
-    time_gaps: f64,
-}
 
 pub fn average_code_insertions_per_commit(repo: &Repo) -> Option<f64> {
     get_repowalk_data(repo)?.insertions

@@ -1,5 +1,5 @@
 use crate::{
-    readme::{count_emojis, count_headings},
+    readme::{count_emojis},
     traits::{Rule, RuleID, RuleResult, Vibe},
 };
 

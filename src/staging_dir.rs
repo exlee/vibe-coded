@@ -24,7 +24,7 @@ impl AsRef<Path> for StagingDir {
 impl Drop for StagingDir {
     fn drop(&mut self) {
         if !self.alive {
-            std::fs::remove_dir_all(&self.path);
+            let _ = std::fs::remove_dir_all(&self.path);
         }
     }
 }

@@ -1,24 +1,35 @@
-use std::collections::HashSet;
+use std::{path::PathBuf, sync::Once};
 
 use anyhow::Context;
 use git2::Repository;
 
 use crate::{staging_dir::StagingDir, traits::Repo};
 
-pub fn clone_repository(url: &str) -> Result<Repository,anyhow::Error> {
+static REPO_MSG: Once = Once::new();
+
+pub fn path_from_url(url: &str) -> PathBuf {
     let slug = slug_from_url(url);
     let tmpdir_root = std::env::temp_dir();
     let dest_path = &tmpdir_root.join("vibe-coded").join(slug);
+    dest_path.clone()
+}
+pub fn clone_repository(url: &str) -> Result<Repository, anyhow::Error> {
+    let dest_path = &path_from_url(url);
     if dest_path.exists() {
+        REPO_MSG.call_once(|| {
+            println!("Repository exists at: {}", &dest_path.to_string_lossy());
+        });
         return git2::Repository::open(dest_path).context("Can't existing open repository");
     };
     let mut destination = StagingDir::try_new(dest_path)?;
 
     let repo = git2::Repository::clone(url, &destination)?;
     destination.persist();
+    REPO_MSG.call_once(|| {
+        println!("Repository created at: {}", &dest_path.to_string_lossy());
+    });
 
     Ok(repo)
-  
 }
 
 fn slug_from_url(url: &str) -> String {
@@ -27,7 +38,7 @@ fn slug_from_url(url: &str) -> String {
         .map(|c| if c.is_alphanumeric() { c } else { '-' })
         .take(30)
         .collect();
-    
+
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     std::hash::Hash::hash(url, &mut hasher);
     use std::hash::Hasher;

@@ -1,5 +1,3 @@
-use std::fmt::Write;
-use anyhow::anyhow;
 use crate::repo::clone_repository;
 use crate::rules::failed_result::FailedResult;
 
@@ -24,7 +22,7 @@ pub trait Rule: Send + Sync {
     }
    fn run(&self, repo: &Repo) -> Box<dyn RuleResult> {
 
-        match self.run_impl(&repo) {
+        match self.run_impl(repo) {
             Ok(r) => r,
             Err(e) => Box::new(FailedResult::from(e.0)),
         }
@@ -52,5 +50,4 @@ pub trait RuleResult: Send + Sync {
     }
 
 }
-
 

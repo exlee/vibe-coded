@@ -26,7 +26,7 @@ pub mod llm_files {
             };
             Self {
                 files: self.files,
-                llm_files: Some(llm_files)
+                llm_files: if llm_files.is_empty() { None } else { Some(llm_files) },
             }
         }
     }

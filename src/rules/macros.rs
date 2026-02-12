@@ -1,5 +1,3 @@
-use crate::{traits::Repo};
-
 macro_rules! rule_run_impl {
     ($rule:ident, $id:ident, $repo_fn:expr, $closure:expr) => {
 

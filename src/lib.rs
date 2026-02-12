@@ -1,4 +1,5 @@
-use crate::{repo::clone_repository, traits::RuleResult};
+use crate::{repo::{clone_repository,path_from_url}};
+use anyhow::{Context};
 
 use rayon::prelude::*;
 
@@ -22,4 +23,14 @@ pub fn run_rules(url: &str) -> Result<(), anyhow::Error> {
 		}
 
     Ok(())
+}
+
+pub fn clean_repo_dir(url: &str) -> Result<(), anyhow::Error> {
+    let path = path_from_url(url);
+    if path.exists() {
+        println!("Cleaning: {}", &path.to_string_lossy());
+        std::fs::remove_dir_all(&path).context("Failed to clean repo dir")
+    } else {
+        Ok(())
+    }
 }

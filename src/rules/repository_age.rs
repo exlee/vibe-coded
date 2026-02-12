@@ -1,4 +1,4 @@
-use crate::{rule_formatter::{ResultType, RuleFormatter}, rules::failed_result::FailedResult, traits::{Repo, Rule, RuleID, RuleResult, Vibe}};
+use crate::{traits::{Repo, Rule, RuleID, RuleResult, Vibe}};
 
 pub struct RepositoryAge;
 

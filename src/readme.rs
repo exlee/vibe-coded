@@ -1,6 +1,6 @@
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use unicode_segmentation::UnicodeSegmentation;
-use pulldown_cmark::{Parser, Event, Tag, TagEnd};
+use pulldown_cmark::{Parser, Event, Tag};
 
 use crate::traits::Repo;
 
