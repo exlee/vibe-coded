@@ -1,5 +1,5 @@
 macro_rules! rule_run_impl {
-    ($rule:ident, $id:ident, $repo_fn:expr, $closure:expr) => {
+    ($rule:ident, $id:ident, $repo_fn:expr) => {
 
             impl crate::traits::Rule for $rule {
                 fn run_impl(
@@ -8,7 +8,7 @@ macro_rules! rule_run_impl {
                 ) -> Result<Box<dyn crate::traits::RuleResult>, crate::traits::RuleID> {
                     let some_value = $repo_fn(repo);
                     match some_value {
-                        Some(r) => Ok(Box::new($closure(r))),
+                        Some(r) => Ok(Box::new(RuleResult::from(r))),
                         None => Err($crate::traits::RuleID($id)),
                     }
                 }
