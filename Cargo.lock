@@ -1182,6 +1182,7 @@ dependencies = [
  "pulldown-cmark",
  "rayon",
  "regex",
+ "strsim",
  "unicode-segmentation",
 ]
 

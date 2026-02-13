@@ -8,6 +8,7 @@ mod traits;
 mod rule_formatter;
 mod staging_dir;
 mod readme;
+mod messages;
 mod code;
 pub mod repo;
 
@@ -17,7 +18,7 @@ pub fn run_rules(url: &str) -> Result<(), anyhow::Error> {
     let _= clone_repository(url).unwrap();
 		let mut results= rules::all().par_iter().map(|rule| rule.run_url(url)).collect::<Vec<_>>();
 		results.sort_by_key(|a| a.name());
-		results.sort_by_key(|a| a.is_vibe());
+		//results.sort_by_key(|a| a.is_vibe());
 		for r in results {
     		r.render();
 		}

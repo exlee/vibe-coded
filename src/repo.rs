@@ -1,7 +1,7 @@
 use std::{path::PathBuf, sync::Once};
 
 use anyhow::Context;
-use git2::Repository;
+use git2::{FetchOptions, Repository};
 
 use crate::{staging_dir::StagingDir, traits::Repo};
 
@@ -22,9 +22,13 @@ pub fn clone_repository(url: &str) -> Result<Repository, anyhow::Error> {
         return git2::Repository::open(dest_path).context("Can't existing open repository");
     };
     let mut destination = StagingDir::try_new(dest_path)?;
+    let mut fo = FetchOptions::new();
+    fo.depth(100);
+    let mut builder = git2::build::RepoBuilder::new();
+    builder.fetch_options(fo);
 
 	 	println!("Fetching repository, it might take a while");
-    let repo = git2::Repository::clone(url, &destination)?;
+    let repo = builder.clone(url, &destination.path)?;
     destination.persist();
     REPO_MSG.call_once(|| {
         println!("Repository created at: {}", &dest_path.to_string_lossy());

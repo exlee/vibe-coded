@@ -1,6 +1,7 @@
 use std::{collections::{HashMap, HashSet}, path::PathBuf};
 use cached::proc_macro::once;
 use git2::TreeWalkMode;
+use strsim::jaro_winkler;
 
 use crate::traits::Repo;
 
@@ -26,6 +27,7 @@ pub struct WalkerResult {
     pub deletions: Option<f64>,
     pub time_gaps: Option<f64>,
     pub files: Vec<String>,
+    pub msg_similarity: Option<f64>,
 
 }
 
@@ -40,8 +42,9 @@ pub fn get_repowalk_data(repo: &Repo) -> Option<WalkerResult> {
 
 		let mut insertions: Vec<usize> = Vec::with_capacity(500) ;
 		let mut deletions: Vec<usize> = Vec::with_capacity(500) ;
-		let mut gaps: Vec<usize> = Vec::with_capacity(500) ;
+		let mut gaps: Vec<usize> = Vec::with_capacity(500);
 		let mut next_commit = None;
+		let mut messages: Vec<String> = Vec::with_capacity(500);
 		let mut files_hs: HashSet<String> = HashSet::new();
 
     while let Some(Ok(oid)) = walker.next() {
@@ -52,9 +55,12 @@ pub fn get_repowalk_data(repo: &Repo) -> Option<WalkerResult> {
         for te in commit.tree().unwrap().iter() {
             if let Some(p) = te.name() {
                 for p in p.split("/") {
-                files_hs.insert(p.to_lowercase());
+                    files_hs.insert(p.to_lowercase());
                 }
             }
+        }
+        if let Some(summary) = commit.summary() {
+            messages.push(String::from(summary));
         }
 
         if next_commit.is_none() {
@@ -63,17 +69,19 @@ pub fn get_repowalk_data(repo: &Repo) -> Option<WalkerResult> {
         };
         let nc = next_commit.unwrap();
 
+				// Stats block
+				{
 				let diff = repo.diff_tree_to_tree(
     				commit.tree().ok().as_ref(),
     				nc.tree().ok().as_ref(),
     				None
 				).unwrap();
-				let stats = diff.stats().unwrap();
-				insertions.push(stats.insertions());
-				deletions.push(stats.deletions());
+    				let stats = diff.stats().unwrap();
+    				insertions.push(stats.insertions());
+    				deletions.push(stats.deletions());
+				}
+
 				gaps.push((nc.time().seconds() - commit.time().seconds()) as usize);
-
-
 				next_commit = Some(commit);
 
    				
@@ -82,33 +90,77 @@ pub fn get_repowalk_data(repo: &Repo) -> Option<WalkerResult> {
                 insertions: mean_iqr(&mut insertions),
                 deletions: mean_iqr(&mut deletions),
                 time_gaps: mean_iqr(&mut gaps),
+                msg_similarity: analyze_msg_similarity(&messages),
                 files: files_hs.iter().cloned().collect(),
     })
 
 }
-fn mean_iqr(data: &mut [usize]) -> Option<f64> {
+
+pub fn analyze_msg_similarity(messages: &[String]) -> Option<f64> {
+    let mut messages = messages.to_vec();
+    messages.sort_unstable();
+
+    if messages.len() < 5 {
+        return None;
+    }
+
+    let mut scores: Vec<f64> = messages
+        .windows(2)
+        .map(|w| jaro_winkler(&w[0], &w[1]))
+        .collect();
+
+    scores.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    let count = scores.len();
+    let q1_idx = count / 4;
+    let q3_idx = (count * 3) / 4;
+
+    let q1 = scores[q1_idx];
+    let q3 = scores[q3_idx];
+    let iqr = q3 - q1;
+    let mean: f64 = scores.iter().sum::<f64>() / count as f64;
+
+    Some(mean * (1.0-iqr))
+}
+
+trait ToF64 {
+    fn to_f64(self) -> f64;
+}
+
+macro_rules! impl_to_f64 {
+    ($($t:ty),*) => {
+        $(
+            impl ToF64 for $t {
+                fn to_f64(self) -> f64 { self as f64 }
+            }
+        )*
+    };
+}
+impl_to_f64!(usize, f64);
+
+fn mean_iqr<T: ToF64 + Copy + PartialOrd + std::iter::Sum>(data: &mut [T]) -> Option<f64> {
     if data.len() < 4 {
         return None;
     }
 
-    data.sort_unstable();
+    data.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-    let q1 = data[data.len() / 4] as f64;
-    let q3 = data[data.len() * 3 / 4] as f64;
+    let q1 = data[data.len() / 4].to_f64();
+    let q3 = data[data.len() * 3 / 4].to_f64();
     let iqr = q3 - q1;
 
     let lower_fence = q1 - 1.5 * iqr;
     let upper_fence = q3 + 1.5 * iqr;
 
     let filtered: Vec<_> = data.iter()
-        .filter(|&&x| x as f64 >= lower_fence && x as f64 <= upper_fence)
+        .filter(|&&x| x.to_f64() >= lower_fence && x.to_f64() <= upper_fence)
         .collect();
 
     if filtered.is_empty() {
         return None;
     }
 
-    Some(filtered.iter().map(|&&x| x).sum::<usize>() as f64 / filtered.len() as f64)
+    Some(filtered.iter().map(|&&x| x).sum::<T>().to_f64() / filtered.len() as f64)
 }
 
 const COMMENT_MAP: [(&str, &str); 47] = [
